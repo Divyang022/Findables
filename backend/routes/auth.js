@@ -1,33 +1,33 @@
-// const { request } = require("express");
-// const bcryptjs =require('bcryptjs')
+
 const express = require('express')
 const nodemailer=require("nodemailer")
 const mailgun =require("nodemailer-mailgun-transport")
-const router = express.Router()
+const router = express.Router()  //it is used when there are many routes so we can export from this file
 const jwt=require('jsonwebtoken')
-// const httpProxy = require('http-proxy');
+
 const {requireSignin}=require('../middleware')
-// const proxy = httpProxy.createServer({});
-// const passport=require('passport')
+
 const {promisify}=require("util")
 const Signup=require('../models/signup');
 const { token } = require('morgan');
-// const { db } = require("../models/signup");
-// const { Router } = require('express');
-// const { token } = require('morgan');
+
 require("dotenv").config({path: '../../.env'});
 const JWT_SECRET=process.env.JWT_SECRET
 const JWT_EXPIRES=process.env.JWT_EXPIRES
 const NODE_ENV=process.env.NODE_ENV
-// console.log(JWT_EXPIRES);
-// console.log(JWT_SECRET);
 
+
+//takes a user id as input and uses the jwt.sign function to generate a JSON Web Token (JWT) with the provided user id. 
+//The JWT will be signed using the JWT_SECRET and will expire after the time specified in JWT_EXPIRES.
 
 const signJwt=(id)=>{
     return jwt.sign({id},JWT_SECRET,{
         expiresIn: JWT_EXPIRES
     })
 }
+
+//This function is used to send the JWT token as a cookie in the response. It calls the signJwt function
+// to generate the token based on the user id. The token is then set as a cookie with an expiration date. 
 
 const sendToken=(user,statuscode,req,res)=>{
     const token=signJwt(user._id)
@@ -43,6 +43,10 @@ const sendToken=(user,statuscode,req,res)=>{
         // user
     })
 }
+
+
+//This function is used to sign out a user. It clears the JWT cookie stored in the client's browser and sends a JSON response with a success message.
+
 
 const signout=(req,res)=>{
     res.clearCookie('token')
@@ -131,33 +135,15 @@ router.get('/',(req,res)=>res.send("This is Home page !!"))
 
 router.post('/signup',checkField,checkUsername,checkPassword,async (req,res)=>{
     console.log("Signup :", req.body)
-    // const data=req.body
+    
     var firstname=req.body.firstname
     var lastname=req.body.lastname
     var email=req.body.email
     var number=req.body.number
     var password=req.body.password
-    // password=bcryptjs.hashSync(password,10) //encrypting the password
-    // var newSignup=new Signup({
-    //     username:username,
-    //     password:password
-    // })
-    // newSignup.save((error)=>{
-    //     if(error){
-    //         console.log('Error occured in pushing the data')
-    //         // res.status(500).json({msg:'error occured'})
-    //     }
-    //     else{
-    //         sendToken(newSignup,201,req,res)
-    //         console.log('Data pushed')
-    //         res.send("Done")
-    //         // proxy.web(req, res, { target: 'http://localhost:3000/log-in' });
-    //         // res.json({msg:'Successfully pushed'})
-    //     }
-    // })
 
     try{
-        // console.log(firstname,lastname,email,password)
+        
         const newSignup = await Signup.create({
             firstname:firstname,
             lastname:lastname,
@@ -165,7 +151,6 @@ router.post('/signup',checkField,checkUsername,checkPassword,async (req,res)=>{
             number:number,
             password:password
         })
-        // sendToken(newSignup,201,req,res)
         console.log(newSignup)
         res.send("Done")
     }
@@ -179,21 +164,18 @@ router.post('/login',checkFieldLogin,(req,res,next)=>{
     const password=req.body.password
 
     var checkUser=Signup.findOne({email:email})
-    // console.log(checkUser)
     checkUser.exec((err,data)=>{
-        // console.log("Inside execution")
+        
         if(!data){
             console.log('Not exist')
             res.send("Email does not exist")
         }
         else{
-            // console.log(data)
+            
             var dbpassword=data.password
             if(dbpassword==password){
                 console.log("Logging in")
-                //sendToken(checkUser,201,req,res)
                 const jwt_token=jwt.sign({_id:data._id,role:"user"},process.env.JWT_SECRET,{expiresIn: '1hr'})
-                // res.send("successfull")
                 res.cookie('token',token,{expiresIn:'1hr'})
                 res.status(200).json({
                     jwt_token,
@@ -203,73 +185,19 @@ router.post('/login',checkFieldLogin,(req,res,next)=>{
             }
             else{
                 console.log('Please check again !')
-                // res.status(400).json({
-                //     message: "Password Incorrect"
-                // })
                 res.send("Password Incorrect")
             }
         }
-        // console.log('Data is :',data)
-        //var dbpassword=data.password
-        //If bcryptJS is used
-        // if(bcryptjs.compareSync(password,dbpassword)){
-        //     console.log('Login Successful !')
-        // }
-        // else{
-        //     console.log('Check Again')
-        // }
-
-        // if(dbpassword==password){
-        //     sendToken(checkUser,201,req,res)
-        //     console.log("Login successfull")
-        // }
-        // else{
-        //     console.log('Please check again !')
-        //     res.send("Password incorrect !")
-        // }
     })
-    // console.log('passport authenticate')
-    // passport.authenticate('local',{
-    //     successRedirect:'/',
-    //     failureRedirect:'/',
-    //     failureFlash:true
-    // })(req,res,next)
-    // passport.authenticate('local',function(error,user,msg){
-    //     console.log("Inside authentication")
-    //     if(error){
-    //         res.status(500).json({
-    //             message:'Opps !!',
-    //             error:error.message || 'Internal server error'
-    //         })
-    //     }
-    //     // return res.json({
-    //     //     // message:'User Authenticated'
-    //     //     user
-    //     // })
-    //     // req.logIn(user,function(error){
-    //     //     if(error){
-    //     //         res.status(500).json({
-    //     //             message:'Opps !!',
-    //     //             error:error.message || 'Internal server error'
-    //     //         })
-    //     //     }
-    //     //     user.isAuthenticated=true
-    //     //     return res.json(user)
-    //     // })
-    // })(req,res,next)
-    // console.log('passport authenticate done')
 })
-router.post('/checktoken',requireSignin,(req,res)=>{
+router.post('/checktoken',requireSignin,(req,res)=>{  //middleware.js
     res.status(200).json({})
 })
 router.post('/signout',requireSignin, signout)
 router.post('/feed',requireSignin,(req,res)=>res.status(200).json({
     message:"Working fine"
 }))
-// router.use(secure)
-// router.post('/feed',requireSignin,(req,res)=>res.status(200).json({
-//     message:"Working fine"
-// }))
+
 
 router.post('/sendmessage',(req,res)=>{
     console.log(req.body)

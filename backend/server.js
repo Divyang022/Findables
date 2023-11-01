@@ -10,7 +10,7 @@ const routes = require('./routes/auth')
 const category = require('./routes/category')
 const passport = require('passport');
 var path = require('path');
-app.use(cors())
+app.use(cors()) //Cross-Origin Resource Sharing, is used to allow web pages from one domain to request resources (such as data, images, or scripts) from another domain
 app.enable("trust proxy")
 
 app.use(cors({
